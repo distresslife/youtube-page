@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Youtube Page</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="css/normalize.css">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+</head>
+<body>
+	<div class="main"><div class="video-list"></div></div>
+	<script type="text/javascript">
+	var tag = document.createElement('script');
+	tag.src = "https://www.youtube.com/iframe_api";
+	var firstScriptTag = document.getElementsByTagName('script')[0];
+	firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+	var player;
+
+	function onPlayerReady(event) {
+	    event.target.playVideo();
+	}
+	function onPlayerStateChange(state) {
+	    if (state.data === 0) {
+	        //ended
+	        player.seekTo(0);
+	    }
+	    if (state.data === 1) {
+	        //playing
+	        var vid = $('.video-list .main').attr('data-id');
+
+	        $('.video-list .video[data-id="'+vid+'"]').find('.fa').removeClass('fa-play-circle').addClass('fa-pause-circle');
+	        $('.video-list .video:not([data-id="'+vid+'"])').find('.fa').removeClass('fa-pause-circle').addClass('fa-play-circle');
+	    }
+	    if (state.data === 2) {
+	        //paused
+	        var vid = $('.video-list .main').attr('data-id');
+	        $('.video-list ..video[data-id="'+vid+'"]').find('.fa').removeClass('fa-pause-circle').addClass('fa-play-circle');
+	    }
+	}
+
+	function onYouTubeIframeAPIReady() {
+	    console.log('onReady');
+	    $('#YTplayer').css({height: $('.video-list .main').height()});
+	    $.getJSON("list.json",function(data){
+	    	var html = '';
+	    	$.each(data, function(k, v){
+	    		if (k === 0) {
+	    			html += '<div class="video main" data-id="'+v.videoId+'"><div id="YTplayer"></div>';
+	    			html += '<img src="http://img.youtube.com/vi/'+v.videoId+'/hqdefault.jpg">';
+	    			html += '<i class="fa fa-play-circle"></i>';
+		    		html += '<div class="cover"></div>';
+		    		html += '<span class="title">'+v.title+'</span>';
+		    		html += '</div>';
+	    		}
+
+	    		html += '<div class="video" data-id="'+v.videoId+'">';
+	    		html += '<img src="http://img.youtube.com/vi/'+v.videoId+'/mqdefault.jpg">';
+	    		html += '<i class="fa fa-play-circle"></i>';
+	    		html += '<div class="cover"></div>';
+	    		html += '<span class="title">'+v.title+'</span>';
+	    		html += '</div>';
+	    	});
+	    	$('.video-list').append(html);
+	    });
+
+	    $('.video-list').on('click', '.main', function(e){
+	    	var vid = $(this).attr('data-id');
+	        if(typeof($('#YTplayer').attr('src')) === "undefined") {
+	            $('#YTplayer').css({
+	                height: $(this).height()
+	            });
+	            player = new YT.Player('YTplayer', {
+	              videoId: vid,
+	              playerVars: {
+	                // controls: 0,
+	                showinfo: 0,
+	                modestbranding: 1,
+	                wmode: 'transparent'
+	              },
+	              events: {
+	                'onReady': onPlayerReady,
+	                'onStateChange': onPlayerStateChange
+	              }
+	            });
+	        } else {
+	             player.loadVideoById(vid);
+	        }
+	    }).on('click', '.video:not(.main)', function(e){
+	        if ($(this).find('.fa').hasClass('fa-pause-circle')) {
+	            player.pauseVideo();
+	        } else {
+	            var vid = $(this).attr('data-id');
+	            $('.video-list .main').attr('data-id', vid);
+	            $('.video-list .main .fa').removeClass('fa-pause-circle').addClass('fa-play-circle').click();
+	        }
+	    });
+	    
+	    $(window).resize(function() {
+	        var width = $('.video-list .main').width(),
+	            pWidth,
+	            height = $('.video-list .main').height(),
+	            pHeight,
+	            $YTplayer = $('#YTplayer');
+
+	        if (width / (16/9) < height) {
+	            pWidth = Math.ceil(height * (16/9));
+	            $YTplayer.width(pWidth).height(height).css({left: (width - pWidth) / 2, top: 0});
+	        } else {
+	            pHeight = Math.ceil(width / (16/9));
+	            $YTplayer.width(width).height(pHeight).css({left: 0, top: (height - pHeight) / 2});
+	        }
+	    });
+	}
+	</script>
+</body>
+</html>
